@@ -18,7 +18,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY ='django-insecure-ntw(n3v&1z*m-9$@wk!48lqwct^jkpq2e5l6t$#t#7@ld-^2cv5'
 
 DEBUG = True
 AUTH_USER_MODEL = 'apps.User'
