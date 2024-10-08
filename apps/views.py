@@ -1,15 +1,19 @@
+import random
+
+from django.core.mail import send_mail
 from django_filters import FilterSet, CharFilter, ModelChoiceFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, permissions, status
-from rest_framework.generics import UpdateAPIView, ListCreateAPIView, ListAPIView
+from rest_framework.generics import UpdateAPIView, ListCreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.models import HomeCategory, Home, HomeImages, HomeNeed, Advertisement, User, District, Region
+from apps.models import HomeCategory, Home, HomeImages, HomeNeed, Advertisement, User, District, Region, LoginRegister
 from apps.serializers import HomeCategorySerializer, HomeSerializer, HomeImagesSerializer, HomeNeedSerializer, \
-    AdvertisementSerializer, UserSerializer, DistrictSerializer, RegionSerializer, RegisterSerializer
+    AdvertisementSerializer, UserSerializer, DistrictSerializer, RegionSerializer, RegisterSerializer, \
+    LoginRegisterModelSerializer
 
 
 @extend_schema(tags=["Category"])
@@ -78,7 +82,6 @@ class RegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class HomeFilter(FilterSet):
     district = ModelChoiceFilter(queryset=District.objects.all())
     location = CharFilter(lookup_expr='icontains')
@@ -94,3 +97,63 @@ class HomeListAPIView(ListAPIView):
     serializer_class = HomeSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = HomeFilter
+
+
+@extend_schema(tags=["RegisterLogin"])
+class LoginRegisterListCreateAPIView(ListCreateAPIView):
+    queryset = LoginRegister.objects.all()
+    serializer_class = LoginRegisterModelSerializer
+
+    def post(self, request, *args, **kwargs):
+        sms_verify_code = str(random.randint(1000, 9999))
+
+        data = request.data.copy()
+        data['sms_verify'] = sms_verify_code
+
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+
+            email = serializer.validated_data['email']
+            send_mail(
+                'SMS Verification Code',
+                f'Your verification code is: {sms_verify_code}',
+                'Uy_Bor@example.com',
+                [email],
+                fail_silently=False,
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(tags=["RegisterLogin"])
+class LoginRegisterRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = LoginRegister.objects.all()
+    serializer_class = LoginRegisterModelSerializer
+
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return super().put(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
+
+
+class VerifySMSAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        user_id = request.data.get('user_id')
+        sms_verify_code = request.data.get('sms_verify')
+
+        try:
+            user = LoginRegister.objects.get(user_id=user_id)
+            if user.sms_verify == sms_verify_code:
+                user.is_verified = True
+                user.save()
+                return Response({"message": "User successfully verified."}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "Invalid verification code."}, status=status.HTTP_400_BAD_REQUEST)
+        except LoginRegister.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)

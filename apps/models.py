@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db.models import EmailField, CharField, IntegerField, Model, TextChoices, TextField, ForeignKey, CASCADE, \
     FloatField, FileField, ImageField, SlugField, DateTimeField, ManyToManyField
 from django.utils.text import slugify
+from rest_framework.fields import BooleanField
 
 
 class Region(Model):
@@ -117,3 +118,14 @@ class HomeNeed(Model):
 class Advertisement(Model):
     video = FileField(upload_to='advertisements/')
     home = ForeignKey('apps.Home', on_delete=CASCADE, related_name='advertisements')
+
+
+class LoginRegister(Model):
+    user_id = IntegerField(unique=True)
+    phone_number = IntegerField(unique=True)
+    sms_verify = CharField(max_length=10, unique=True)
+    email = EmailField(unique=True)
+    is_verified = BooleanField(default=False)
+
+    def __str__(self):
+        return f"User {self.user_id}"

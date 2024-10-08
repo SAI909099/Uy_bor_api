@@ -1,6 +1,7 @@
 from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer
 
-from apps.models import HomeCategory, HomeImages, Home, HomeNeed, Advertisement, District, User, Region
+from apps.models import HomeCategory, HomeImages, Home, HomeNeed, Advertisement, District, User, Region, LoginRegister
 
 
 class HomeCategorySerializer(serializers.ModelSerializer):
@@ -84,3 +85,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+class LoginRegisterModelSerializer(ModelSerializer):
+    class Meta:
+        model = LoginRegister
+        fields = "__all__"
+        read_only_fields = ['is_verified']

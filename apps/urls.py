@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from apps.views import HomeCategoryViewSet, HomeViewSet, HomeImageViewSet, HomeNeedViewSet, AdvertisementViewSet, \
-    UserProfileUpdateView, DistrictListView, RegionListView, RegisterView, HomeListAPIView
+    UserProfileUpdateView, DistrictListView, RegionListView, RegisterView, HomeListAPIView, \
+    LoginRegisterListCreateAPIView, VerifySMSAPIView, LoginRegisterRetrieveUpdateDestroyAPIView
 
 router = DefaultRouter()
 router.register('categories', HomeCategoryViewSet, basename='categories')
@@ -21,8 +22,11 @@ urlpatterns = [
 ]
 
 urlpatterns += [
+    path('login/register/', LoginRegisterListCreateAPIView.as_view(), name='login-register'),
+    path('login/verify/', VerifySMSAPIView.as_view(), name='verify-sms'),
+    path('LoginRegister/<int:pk>', LoginRegisterRetrieveUpdateDestroyAPIView.as_view()),
 
-    path('api/register/', RegisterView.as_view(), name='register'),
+    # path('api/register/', RegisterView.as_view(), name='register'),
 
     path('filter/', HomeListAPIView.as_view(), name='filter'),
 
